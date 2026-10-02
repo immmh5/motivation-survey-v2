@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تقرير مقياس الدافعية للتعلم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+:root{--navy:#0b3b5a;--blue:#0f86bd;--teal:#14a3a3;--gold:#e0a526;--ok:#16834b;--mid:#e0a526;--low:#c8483d;--ink:#1f2a33;--muted:#64748b;--line:#e3e8ee;--soft:#f4f8fb}
+*{box-sizing:border-box}
+body{margin:0;background:#dfe6ec;color:var(--ink);font-family:"Tajawal",Tahoma,Arial,sans-serif;font-size:15px;line-height:1.7}
+.toolbar{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.toolbar b{margin-inline-end:auto;font-size:16px}
+.tb{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:8px 12px;font:700 13px "Tajawal",Tahoma,sans-serif;cursor:pointer;text-decoration:none}
+.tb.main{background:var(--gold);color:#2b1d00}
+.tb:disabled{opacity:.6;cursor:wait}
+#status{width:100%;font-size:13px;color:#cfe6f5;min-height:0}
+.sheets{padding:18px 8px 40px}
+.sheet{width:794px;min-height:1123px;margin:0 auto 22px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);position:relative;padding:46px 50px 60px;overflow:hidden}
+.sheet .foot{position:absolute;bottom:18px;left:50px;right:50px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
+.band{position:absolute;top:0;right:0;left:0;height:8px;background:linear-gradient(90deg,var(--teal),var(--blue),var(--navy))}
+h2.sec{font-size:24px;color:var(--navy);margin:4px 0 18px;display:flex;align-items:center;gap:10px}
+h2.sec .n{display:inline-flex;width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;align-items:center;justify-content:center;font-size:18px}
+h3{font-size:17px;color:var(--navy);margin:18px 0 8px}
+p{margin:6px 0}
+/* cover */
+.cover{padding:0;background:linear-gradient(160deg,#0b3b5a 0%,#0f6f9e 55%,#14a3a3 100%);color:#fff}
+.cover .inner{padding:70px 60px 60px;height:1123px;display:flex;flex-direction:column}
+.cover .badge{align-self:flex-start;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:30px;padding:6px 16px;font-size:13px}
+.cover h1{font-size:44px;line-height:1.35;margin:40px 0 10px;font-weight:800}
+.cover .sub{font-size:19px;opacity:.9}
+.cover .art{margin:36px 0;display:flex;gap:14px;align-items:flex-end;height:150px}
+.cover .art i{flex:1;border-radius:10px 10px 0 0;background:rgba(255,255,255,.22)}
+.cover .art i:nth-child(odd){background:rgba(224,165,38,.85)}
+.cover .big{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:34px}
+.cover .big div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px;text-align:center}
+.cover .big b{display:block;font-size:30px}
+.cover .big span{font-size:13px;opacity:.9}
+.fields{margin-top:auto;background:#fff;color:var(--ink);border-radius:16px;padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.fields label{font-size:12px;color:var(--muted);display:block}
+.fields input{width:100%;border:0;border-bottom:2px dashed #cbd5e1;font:700 16px "Tajawal",Tahoma,sans-serif;padding:4px 2px;color:var(--navy);background:transparent;outline:none}
+.fields input:focus{border-bottom-color:var(--blue)}
+.fields .wide{grid-column:1/-1}
+/* cards */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.kpi b{display:block;font-size:28px;color:var(--navy);line-height:1.2}
+.kpi span{font-size:13px;color:var(--muted)}
+.lv{display:inline-block;padding:2px 12px;border-radius:20px;font-weight:700;font-size:13px;color:#fff}
+.lv.high{background:var(--ok)}.lv.mid{background:var(--mid);color:#2b1d00}.lv.low{background:var(--low)}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+.lvbox{border-radius:14px;padding:14px;color:#fff;text-align:center}
+.lvbox b{font-size:30px;display:block;line-height:1.2}
+.lvbox.high{background:linear-gradient(135deg,#16834b,#2fb36d)}.lvbox.mid{background:linear-gradient(135deg,#d39213,#efbe4f);color:#2b1d00}.lvbox.low{background:linear-gradient(135deg,#b23a30,#e0675c)}
+.callout{background:#eef7fc;border-right:5px solid var(--blue);border-radius:10px;padding:12px 16px;margin:14px 0}
+.cbox{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+.cbox .t{font-weight:700;color:var(--navy);font-size:14px;margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+canvas{width:100%!important}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{border:1px solid var(--line);padding:5px 6px;text-align:center}
+th{background:var(--navy);color:#fff;font-weight:700}
+tr:nth-child(even) td{background:#f8fafc}
+.bar{height:9px;border-radius:5px;background:#e5ebf0;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--blue))}
+.rank{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rank ol{margin:0;padding:0;list-style:none}
+.rank li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:7px;background:var(--soft)}
+.rank li .q{font-weight:800;min-width:70px}
+.rank li .m{margin-inline-start:auto;font-weight:800;color:var(--navy)}
+.rank .top li{border-right:4px solid var(--ok)}.rank .bot li{border-right:4px solid var(--low)}
+.recs{padding:0;margin:0;list-style:none;counter-reset:r}
+.recs li{counter-increment:r;position:relative;padding:12px 56px 12px 14px;margin-bottom:10px;background:var(--soft);border-radius:12px}
+.recs li::before{content:counter(r);position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.students{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.st{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;break-inside:avoid}
+.st .h{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--navy);margin-bottom:4px}
+.st .row{display:flex;justify-content:space-between;color:var(--muted)}
+.st .row b{color:var(--ink)}
+.empty{text-align:center;color:var(--muted);padding:60px 0}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .toolbar{display:none}
+  .sheets{padding:0}
+  .sheet{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:820px){.sheets{overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="toolbar" id="toolbar">
+  <b>📘 تقرير المعلم</b>
+  <button class="tb main" id="bPdf" onclick="downloadPDF()">تحميل PDF</button>
+  <button class="tb" onclick="window.print()">طباعة</button>
+  <button class="tb" id="bImgs" onclick="downloadPagesZip()">صور الصفحات (ZIP)</button>
+  <button class="tb" id="bCharts" onclick="downloadChartsZip()">صور الرسوم (ZIP)</button>
+  <button class="tb" onclick="downloadHTML()">ملف يفتح بدون إنترنت</button>
+  <a class="tb" href="/admin">رجوع للوحة</a>
+  <div id="status"></div>
+</div>
+<div class="sheets" id="sheets"><div class="sheet"><div class="empty">جارٍ تحميل البيانات...</div></div></div>
+
+<script>
+const EDU={below_university:"أقل من جامعي",university:"جامعي",master:"ماجستير",doctorate:"دكتوراه"};
+const LV={high:"مرتفع",mid:"متوسط",low:"منخفض"};
+const LVC={high:"#16834b",mid:"#e0a526",low:"#c8483d"};
+const PAL=["#0f86bd","#14a3a3","#e0a526","#c8483d","#0b3b5a","#6aa84f","#e76f51","#8e7cc3"];
+const ANS=["#c8483d","#e8875a","#b8c2cc","#4fb3d9","#16834b"];
+const charts={};
+const FIELDS_KEY="teacher_report_fields_v1";
+Chart.defaults.font.family="Tajawal, Tahoma, Arial, sans-serif";Chart.defaults.font.size=12;Chart.defaults.color="#334155";
+const level=m=>m>=3.67?"high":m>=2.34?"mid":"low";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const f2=n=>(+n).toFixed(2);
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+function status(t){document.getElementById("status").textContent=t||""}
+
+function mk(id,cfg){
+  if(charts[id])charts[id].destroy();
+  cfg.options=Object.assign({responsive:true,maintainAspectRatio:true,animation:false,devicePixelRatio:2},cfg.options||{});
+  cfg.plugins=(cfg.plugins||[]).concat([{id:"bg",beforeDraw:c=>{const x=c.ctx;x.save();x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.restore()}}]);
+  charts[id]=new Chart(document.getElementById(id),cfg);
+}
+const valueLabels={id:"vl",afterDatasetsDraw(c){const x=c.ctx;x.save();x.font="700 11px Tajawal, Tahoma";x.fillStyle="#1f2a33";x.textAlign="center";
+  c.data.datasets.forEach((d,i)=>{const meta=c.getDatasetMeta(i);if(meta.hidden||c.config.type!=="bar")return;meta.data.forEach((el,j)=>{const v=d.data[j];if(v===0||v==null)return;
+    if(c.options.indexAxis==="y"){x.textAlign="left";x.fillText(v,el.x+4,el.y+4)}else x.fillText(v,el.x,el.y-4)})});x.restore()}};
+
+function sheet(inner,title){return `<div class="sheet"><div class="band"></div>${inner}<div class="foot"><span>${esc(title||"تقرير مقياس عوامل واستراتيجيات الدافعية للتعلم")}</span><span class="pg"></span></div></div>`}
+
+async function load(){
+  let data;
+  try{data=await (await fetch("/admin/api/data",{cache:"no-store"})).json()}catch(e){document.getElementById("sheets").innerHTML=sheet('<div class="empty">تعذر تحميل البيانات. حدّث الصفحة.</div>');return}
+  build(data.submissions,data.stats);
+}
+
+function build(S,st){
+  const n=S.length;
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem(FIELDS_KEY)||"{}")}catch(_){return{}}})();
+  const today=new Date().toLocaleDateString("ar-SA",{year:"numeric",month:"long",day:"numeric"});
+  if(!n){document.getElementById("sheets").innerHTML=sheet('<div class="empty"><h2>لا توجد حلول بعد</h2>بعد ما يحل الطلاب المقياس بيطلع التقرير هنا تلقائيًا.</div>');return}
+
+  const means=S.map(s=>s.mean_score);
+  const avg=means.reduce((a,b)=>a+b,0)/n;
+  const totals=S.map(s=>s.total_score);
+  const tMean=totals.reduce((a,b)=>a+b,0)/n;
+  const tSD=Math.sqrt(totals.reduce((a,b)=>a+(b-tMean)**2,0)/n);
+  const lvCount={high:0,mid:0,low:0};S.forEach(s=>lvCount[level(s.mean_score)]++);
+  const overall=level(avg);
+  const qs=st.questions.map(q=>({...q,num:+q.question.slice(1),lv:level(q.mean)}));
+  const sorted=[...qs].sort((a,b)=>b.mean-a.mean);
+  const top=sorted.slice(0,5),bot=sorted.slice(-5).reverse();
+  const qLv={high:0,mid:0,low:0};qs.forEach(q=>qLv[q.lv]++);
+  const ansAll=[1,2,3,4,5].map(v=>qs.reduce((a,q)=>a+q.distribution[v],0));
+  const ansTot=ansAll.reduce((a,b)=>a+b,0);
+  const agree=pct(ansAll[3]+ansAll[4],ansTot);
+  const grades=Object.keys(st.grades);
+
+  const pages=[];
+  // 1 cover
+  pages.push(`<div class="sheet cover"><div class="inner">
+    <div class="badge">تقرير إحصائي • ${esc(today)}</div>
+    <h1>تقرير نتائج مقياس<br>عوامل واستراتيجيات الدافعية للتعلم</h1>
+    <div class="sub">قراءة شاملة لإجابات الطلاب بالأرقام والرسوم والتوصيات</div>
+    <div class="art">${[40,62,50,85,70,95,58,78,66,100].map(h=>`<i style="height:${h}%"></i>`).join("")}</div>
+    <div class="big">
+      <div><b>${n}</b><span>طالب شارك</span></div>
+      <div><b>${f2(avg)} من 5</b><span>متوسط الدافعية</span></div>
+      <div><b>${LV[overall]}</b><span>المستوى العام</span></div>
+    </div>
+    <div class="fields">
+      <div class="wide"><label>اسم المدرسة</label><input data-k="school" placeholder="اكتب اسم المدرسة" value="${esc(saved.school||"")}"></div>
+      <div><label>مقدَّم إلى (المعلم)</label><input data-k="teacher" placeholder="اسم المعلم" value="${esc(saved.teacher||"")}"></div>
+      <div><label>إعداد</label><input data-k="author" placeholder="اسمك" value="${esc(saved.author||"")}"></div>
+      <div><label>المادة / المقرر</label><input data-k="subject" placeholder="اختياري" value="${esc(saved.subject||"")}"></div>
+      <div><label>التاريخ</label><input data-k="date" value="${esc(saved.date||today)}"></div>
+    </div>
+  </div></div>`);
+
+  // 2 summary
+  const interp=`شارك في المقياس <b>${n}</b> طالبًا، وبلغ متوسط الدافعية العام <b>${f2(avg)}</b> من 5 (الدرجة الكلية ${f2(tMean)} من 285)، وهو مستوى <b>${LV[overall]}</b>.
+  ${pct(lvCount.high,n)}% من الطلاب دافعيتهم مرتفعة، و${pct(lvCount.mid,n)}% متوسطة، و${pct(lvCount.low,n)}% منخفضة.
+  وكانت ${agree}% من جميع الإجابات بالموافقة (4 أو 5).`;
+  pages.push(sheet(`<h2 class="sec"><span class="n">1</span>الملخص التنفيذي</h2>
+    <div class="kpis">
+      <div class="kpi"><b>${n}</b><span>عدد الطلاب</span></div>
+      <div class="kpi"><b>${f2(tMean)}</b><span>متوسط الدرجة الكلية / 285</span></div>
+      <div class="kpi"><b>${f2(avg)}</b><span>متوسط العبارة / 5</span></div>
+      <div class="kpi"><b>${st.total_score.max}</b><span>أعلى درجة</span></div>
+      <div class="kpi"><b>${st.total_score.min}</b><span>أدنى درجة</span></div>
+      <div class="kpi"><b>${f2(tSD)}</b><span>الانحراف المعياري</span></div>
+    </div>
+    <div class="callout">${interp}</div>
+    <h3>مستويات الطلاب</h3>
+    <div class="levels">
+      <div class="lvbox high"><b>${lvCount.high}</b>مرتفع (${pct(lvCount.high,n)}%)</div>
+      <div class="lvbox mid"><b>${lvCount.mid}</b>متوسط (${pct(lvCount.mid,n)}%)</div>
+      <div class="lvbox low"><b>${lvCount.low}</b>منخفض (${pct(lvCount.low,n)}%)</div>
+    </div>
+    <div class="two">
+      <div class="cbox"><div class="t">توزيع مستويات الطلاب</div><canvas id="cLevels"></canvas></div>
+      <div class="cbox"><div class="t">توزيع كل الإجابات (1 – 5)</div><canvas id="cAns"></canvas></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted)">معيار الحكم: متوسط من 1 إلى 2.33 منخفض، من 2.34 إلى 3.66 متوسط، من 3.67 إلى 5 مرتفع.</p>`));
+
+  // 3 sample
+  pages.push(sheet(`<h2 class="sec"><span class="n">2</span>خصائص الطلاب المشاركين</h2>
+    <div class="two">
+      <div class="cbox"><div class="t">عدد الطلاب حسب الصف</div><canvas id="cGrade"></canvas></div>
+      <div class="cbox"><div class="t">متوسط الدرجة الكلية حسب الصف</div><canvas id="cGradeMean"></canvas></div>
+      <div class="cbox"><div class="t">مستوى تعليم الأب</div><canvas id="cFather"></canvas></div>
+      <div class="cbox"><div class="t">مستوى تعليم الأم</div><canvas id="cMother"></canvas></div>
+    </div>
+    <div class="cbox"><div class="t">توزيع الدرجات الكلية</div><canvas id="cTotals" height="110"></canvas></div>`));
+
+  // 4 items
+  pages.push(sheet(`<h2 class="sec"><span class="n">3</span>نتائج العبارات</h2>
+    <div class="cbox"><div class="t">متوسط كل عبارة (57 عبارة)</div><canvas id="cQ" height="150"></canvas></div>
+    <div class="rank">
+      <div><h3>🏆 أعلى 5 عبارات</h3><ol class="top">${top.map(q=>`<li><span class="q">العبارة ${q.num}</span><span class="lv ${q.lv}">${LV[q.lv]}</span><span class="m">${f2(q.mean)}</span></li>`).join("")}</ol></div>
+      <div><h3>⚠️ أدنى 5 عبارات</h3><ol class="bot">${bot.map(q=>`<li><span class="q">العبارة ${q.num}</span><span class="lv ${q.lv}">${LV[q.lv]}</span><span class="m">${f2(q.mean)}</span></li>`).join("")}</ol></div>
+    </div>
+    <div class="callout">من 57 عبارة: <b>${qLv.high}</b> بمستوى مرتفع، و<b>${qLv.mid}</b> متوسط، و<b>${qLv.low}</b> منخفض.</div>
+    <div class="cbox"><div class="t">توزيع الإجابات لكل عبارة</div><canvas id="cStack" height="120"></canvas></div>`));
+
+  // 5 recommendations
+  const lowNums=bot.map(q=>q.num).join("، ");
+  const recs=[
+    `التركيز على العبارات الأقل متوسطًا (${lowNums}) ومناقشة أسبابها مع الطلاب، لأنها تمثل أضعف جوانب الدافعية.`,
+    lvCount.low?`متابعة الطلاب ذوي الدافعية المنخفضة (${lvCount.low} طالب) بشكل فردي، وتحديد أهداف صغيرة قابلة للتحقق مع تعزيز فوري عند الإنجاز.`:`لا يوجد طلاب بدافعية منخفضة، ويُنصح بالمحافظة على الأساليب الحالية وتعزيزها.`,
+    `استثمار نقاط القوة الظاهرة في العبارات الأعلى (${top.map(q=>q.num).join("، ")}) لبناء أنشطة يشارك فيها الطلاب بحماس.`,
+    `تنويع استراتيجيات التدريس (التعلم التعاوني، الألعاب التعليمية، المشاريع) لرفع الدافعية الداخلية للتعلم.`,
+    `ربط المحتوى الدراسي بحياة الطلاب واهتماماتهم، وتوضيح فائدة كل درس قبل البدء فيه.`,
+    `تعزيز التواصل مع أولياء الأمور ومشاركتهم في تشجيع أبنائهم ومتابعة تقدمهم.`,
+    `إعادة تطبيق المقياس بعد فترة لقياس أثر الإجراءات ومقارنة النتائج.`
+  ];
+  pages.push(sheet(`<h2 class="sec"><span class="n">4</span>التوصيات</h2>
+    <ul class="recs">${recs.map(r=>`<li>${r}</li>`).join("")}</ul>
+    <h3>عن المقياس وطريقة التحليل</h3>
+    <p>يتكوّن المقياس من 57 عبارة، يجيب الطالب على كل منها باختيار من 1 إلى 5، فتكون الدرجة الكلية بين 57 و285.
+    حُسب لكل عبارة المتوسط والانحراف المعياري وتوزيع الإجابات، وحُسب لكل طالب درجته الكلية ومتوسطه، ثم صُنّف المستوى حسب المعيار:</p>
+    <table style="max-width:420px;margin-top:8px"><tr><th>المتوسط</th><th>المستوى</th></tr>
+      <tr><td>من 1.00 إلى 2.33</td><td><span class="lv low">منخفض</span></td></tr>
+      <tr><td>من 2.34 إلى 3.66</td><td><span class="lv mid">متوسط</span></td></tr>
+      <tr><td>من 3.67 إلى 5.00</td><td><span class="lv high">مرتفع</span></td></tr></table>`));
+
+  // 6 full table (split 29/28)
+  const qRow=q=>{const d=q.distribution,t=n||1;return `<tr><td><b>${q.num}</b></td><td>${f2(q.mean)}</td><td>${f2(q.sd)}</td><td style="width:90px"><div class="bar"><i style="width:${q.mean/5*100}%"></i></div></td><td><span class="lv ${q.lv}">${LV[q.lv]}</span></td>${[1,2,3,4,5].map(v=>`<td>${d[v]} <small style="color:#94a3b8">(${pct(d[v],t)}%)</small></td>`).join("")}</tr>`};
+  const qHead=`<tr><th>العبارة</th><th>المتوسط</th><th>الانحراف</th><th>النسبة</th><th>المستوى</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>`;
+  for(let k=0;k<qs.length;k+=20) pages.push(sheet(`<h2 class="sec"><span class="n">5</span>الجدول التفصيلي للعبارات${k?" (تابع)":""}</h2><table>${qHead}${qs.slice(k,k+20).map(qRow).join("")}</table>`));
+
+  // 7 students: 24 per page
+  const order=S.map((s,i)=>({s,i})).sort((a,b)=>b.s.total_score-a.s.total_score);
+  const card=({s,i})=>{const l=level(s.mean_score);return `<div class="st"><div class="h"><span>طالب ${i+1}</span><span class="lv ${l}">${LV[l]}</span></div>
+    <div class="row"><span>الصف</span><b>${esc(s.grade)}</b></div>
+    <div class="row"><span>الدرجة الكلية</span><b>${s.total_score} من 285</b></div>
+    <div class="row"><span>المتوسط</span><b>${f2(s.mean_score)}</b></div>
+    <div class="bar" style="margin-top:5px"><i style="width:${s.mean_score/5*100}%;background:${LVC[l]}"></i></div></div>`};
+  for(let k=0;k<order.length;k+=18){
+    pages.push(sheet(`<h2 class="sec"><span class="n">6</span>نتائج الطلاب${k?" (تابع)":""}</h2>
+      ${k?"":'<p style="color:var(--muted);font-size:13px;margin-bottom:12px">مرتبة من الأعلى إلى الأدنى، ورقم الطالب حسب ترتيب التسليم.</p>'}
+      <div class="students">${order.slice(k,k+18).map(card).join("")}</div>`));
+  }
+  // 8 students table
+  const stRows=S.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]||""}</td><td>${EDU[s.mother_education]||""}</td><td>${s.total_score}</td><td>${f2(s.mean_score)}</td><td><span class="lv ${level(s.mean_score)}">${LV[level(s.mean_score)]}</span></td></tr>`);
+  const stHead=`<tr><th>#</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة</th><th>المتوسط</th><th>المستوى</th></tr>`;
+  for(let k=0;k<stRows.length;k+=25) pages.push(sheet(`<h2 class="sec"><span class="n">7</span>جدول بيانات الطلاب${k?" (تابع)":""}</h2><table>${stHead}${stRows.slice(k,k+25).join("")}</table>`));
+
+  const box=document.getElementById("sheets");box.innerHTML=pages.join("");
+  const all=box.querySelectorAll(".sheet");all.forEach((s,i)=>{const pg=s.querySelector(".pg");if(pg)pg.textContent=`صفحة ${i+1} من ${all.length}`});
+  box.querySelectorAll(".fields input").forEach(inp=>inp.addEventListener("input",()=>{const o={};box.querySelectorAll(".fields input").forEach(x=>o[x.dataset.k]=x.value);try{localStorage.setItem(FIELDS_KEY,JSON.stringify(o))}catch(_){}}));
+
+  // charts
+  mk("cLevels",{type:"doughnut",data:{labels:["مرتفع","متوسط","منخفض"],datasets:[{data:[lvCount.high,lvCount.mid,lvCount.low],backgroundColor:[LVC.high,LVC.mid,LVC.low]}]},options:{plugins:{legend:{position:"bottom"}}}});
+  mk("cAns",{type:"bar",data:{labels:["1","2","3","4","5"],datasets:[{label:"عدد الإجابات",data:ansAll,backgroundColor:ANS}]},options:{plugins:{legend:{display:false}}},plugins:[valueLabels]});
+  mk("cGrade",{type:"bar",data:{labels:grades,datasets:[{data:grades.map(g=>st.grades[g]),backgroundColor:PAL[0]}]},options:{plugins:{legend:{display:false}}},plugins:[valueLabels]});
+  const gm=Object.keys(st.mean_total_by_grade);
+  mk("cGradeMean",{type:"bar",data:{labels:gm,datasets:[{data:gm.map(g=>st.mean_total_by_grade[g]),backgroundColor:PAL[1]}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:285}}},plugins:[valueLabels]});
+  const edu=(id,o)=>{const k=Object.keys(o);mk(id,{type:"pie",data:{labels:k.map(x=>EDU[x]||x),datasets:[{data:k.map(x=>o[x]),backgroundColor:PAL}]},options:{plugins:{legend:{position:"bottom"}}}})};
+  edu("cFather",st.father_education);edu("cMother",st.mother_education);
+  const bins=["57 إلى 102","103 إلى 148","149 إلى 194","195 إلى 240","241 إلى 285"],bc=[0,0,0,0,0];
+  S.forEach(s=>bc[Math.min(4,Math.max(0,Math.floor((s.total_score-57)/46)))]++);
+  mk("cTotals",{type:"bar",data:{labels:bins,datasets:[{data:bc,backgroundColor:PAL[2]}]},options:{plugins:{legend:{display:false}}},plugins:[valueLabels]});
+  mk("cQ",{type:"bar",data:{labels:qs.map(q=>q.num),datasets:[{data:qs.map(q=>q.mean),backgroundColor:qs.map(q=>LVC[q.lv])}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:5},x:{ticks:{font:{size:9},autoSkip:false}}}}});
+  mk("cStack",{type:"bar",data:{labels:qs.map(q=>q.num),datasets:[1,2,3,4,5].map(v=>({label:String(v),data:qs.map(q=>q.distribution[v]),backgroundColor:ANS[v-1]}))},options:{plugins:{legend:{position:"bottom"}},scales:{x:{stacked:true,ticks:{font:{size:9},autoSkip:false}},y:{stacked:true}}}});
+}
+
+const CHART_NAMES={cLevels:"مستويات-الطلاب",cAns:"توزيع-الإجابات",cGrade:"الطلاب-حسب-الصف",cGradeMean:"المتوسط-حسب-الصف",cFather:"تعليم-الأب",cMother:"تعليم-الأم",cTotals:"توزيع-الدرجات",cQ:"متوسط-العبارات",cStack:"توزيع-إجابات-العبارات"};
+function saveBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+function dayStr(){return new Date().toISOString().slice(0,10)}
+function busy(on){document.querySelectorAll(".toolbar button").forEach(b=>b.disabled=on)}
+async function snap(el){
+  await document.fonts.ready;
+  return html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false,width:el.offsetWidth,height:el.offsetHeight,windowWidth:1000,
+    onclone:doc=>{doc.querySelectorAll(".fields input").forEach(i=>{const s=doc.createElement("div");s.textContent=i.value||"—";s.style.cssText="font:700 16px Tajawal,Tahoma;color:#0b3b5a;border-bottom:2px solid #e2e8f0;padding:4px 2px;min-height:30px";i.replaceWith(s)})}});
+}
+async function downloadPDF(){
+  busy(true);try{
+    const {jsPDF}=window.jspdf;const sheets=[...document.querySelectorAll(".sheet")];let pdf;
+    for(let i=0;i<sheets.length;i++){
+      status(`جارٍ تجهيز PDF... صفحة ${i+1} من ${sheets.length}`);
+      const c=await snap(sheets[i]);const w=210,h=210*c.height/c.width;
+      if(!pdf)pdf=new jsPDF({unit:"mm",format:[w,h],orientation:"portrait",compress:true});else pdf.addPage([w,h],"portrait");
+      pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,w,h);
+    }
+    pdf.save(`تقرير-الدافعية-${dayStr()}.pdf`);status("تم تحميل ملف PDF ✓");
+  }catch(e){console.error(e);status("تعذر إنشاء PDF، جرّب زر «طباعة» واختر حفظ كـ PDF.")}finally{busy(false)}
+}
+async function downloadPagesZip(){
+  busy(true);try{
+    const zip=new JSZip();const sheets=[...document.querySelectorAll(".sheet")];
+    for(let i=0;i<sheets.length;i++){status(`جارٍ تصوير الصفحة ${i+1} من ${sheets.length}...`);const c=await snap(sheets[i]);zip.file(`صفحة-${String(i+1).padStart(2,"0")}.png`,c.toDataURL("image/png").split(",")[1],{base64:true})}
+    saveBlob(await zip.generateAsync({type:"blob"}),`صور-التقرير-${dayStr()}.zip`);status("تم تحميل صور الصفحات ✓");
+  }catch(e){console.error(e);status("تعذر تصوير الصفحات.")}finally{busy(false)}
+}
+async function downloadChartsZip(){
+  const zip=new JSZip();Object.keys(charts).forEach((id,i)=>zip.file(`${String(i+1).padStart(2,"0")}-${CHART_NAMES[id]||id}.png`,charts[id].toBase64Image("image/png",1).split(",")[1],{base64:true}));
+  saveBlob(await zip.generateAsync({type:"blob"}),`رسوم-التقرير-${dayStr()}.zip`);status("تم تحميل صور الرسوم ✓");
+}
+function downloadHTML(){
+  const clone=document.documentElement.cloneNode(true);
+  clone.querySelectorAll("canvas").forEach(cv=>{const orig=document.getElementById(cv.id);const img=document.createElement("img");img.src=charts[cv.id]?charts[cv.id].toBase64Image("image/png",1):"";img.style.width="100%";cv.replaceWith(img)});
+  clone.querySelectorAll(".fields input").forEach((inp,i)=>{const v=document.querySelectorAll(".fields input")[i].value;const s=document.createElement("div");s.textContent=v||"—";s.style.cssText="font-weight:700;font-size:16px;color:#0b3b5a;border-bottom:2px solid #e2e8f0;padding:4px 2px";inp.replaceWith(s)});
+  clone.querySelectorAll("script,#toolbar,link[rel=preconnect]").forEach(x=>x.remove());
+  saveBlob(new Blob(["<!doctype html>\n"+clone.outerHTML],{type:"text/html;charset=utf-8"}),`تقرير-الدافعية-${dayStr()}.html`);status("تم حفظ الملف ✓ يفتح على أي جهاز بدون إنترنت.");
+}
+load();
+</script>
+</body></html>

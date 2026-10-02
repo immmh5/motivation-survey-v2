@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة التقارير — مقياس الدافعية للتعلم</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--blue:#0f86bd;--dark:#07597f;--bg:#eef1f4;--ink:#222;--line:#d7dde3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:var(--dark);color:#fff;padding:16px 20px}header h1{margin:0;font-size:20px}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.card .v{font-size:28px;font-weight:700;color:var(--dark)}.card .l{color:#687582;font-size:13px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.btn{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.btn.alt{background:#fff;color:var(--dark);border:1px solid var(--dark)}.btn.sm{padding:4px 9px;font-size:12px}.btn.del{background:#b3261e}
+section{margin-top:18px}h2{font-size:17px;color:var(--dark)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:12px}
+.chart-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.chart-box .t{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;font-size:14px}
+.wide canvas{max-height:420px}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}th,td{border:1px solid var(--line);padding:6px;text-align:center}th{background:#f4f7f9}
+.scroll{overflow:auto;max-height:520px;border-radius:12px;border:1px solid var(--line)}
+@media print{.btns,.btn,header .hint{display:none!important}body{background:#fff}.scroll{max-height:none}}
+</style>
+</head>
+<body>
+<header><h1>لوحة التقارير — مقياس عوامل واستراتيجيات الدافعية للتعلم</h1></header>
+<main>
+  <div class="cards" id="cards"></div>
+  <div class="btns">
+    <a class="btn" style="background:#16834b;font-weight:700" href="/admin/report">📘 تقرير المعلم (PDF وصور)</a>
+    <a class="btn" href="/admin/download/all.zip">تحميل كل شيء (ZIP)</a>
+    <a class="btn" href="/admin/download/all.json">كل الحلول JSON</a>
+    <a class="btn" href="/admin/download/all.csv">كل الحلول Excel/CSV</a>
+    <a class="btn alt" href="/admin/download/stats.json">تقرير الإحصاءات JSON</a>
+    <a class="btn alt" href="/admin/download/stats.csv">تقرير العبارات CSV</a>
+    <button class="btn alt" onclick="downloadAllCharts()">تحميل كل الرسوم (صور PNG)</button>
+    <button class="btn alt" onclick="window.print()">طباعة / حفظ PDF</button>
+    <button class="btn alt" onclick="load()">تحديث</button>
+  </div>
+
+  <section><h2>الرسوم البيانية</h2>
+    <div class="grid">
+      <div class="chart-box"><div class="t">توزيع الطلاب حسب الصف <button class="btn sm" onclick="png('cGrade')">PNG</button></div><canvas id="cGrade"></canvas></div>
+      <div class="chart-box"><div class="t">متوسط الدرجة الكلية حسب الصف <button class="btn sm" onclick="png('cGradeMean')">PNG</button></div><canvas id="cGradeMean"></canvas></div>
+      <div class="chart-box"><div class="t">تعليم الأب <button class="btn sm" onclick="png('cFather')">PNG</button></div><canvas id="cFather"></canvas></div>
+      <div class="chart-box"><div class="t">تعليم الأم <button class="btn sm" onclick="png('cMother')">PNG</button></div><canvas id="cMother"></canvas></div>
+      <div class="chart-box"><div class="t">توزيع الدرجات الكلية <button class="btn sm" onclick="png('cTotals')">PNG</button></div><canvas id="cTotals"></canvas></div>
+      <div class="chart-box"><div class="t">توزيع كل الإجابات (1–5) <button class="btn sm" onclick="png('cAll')">PNG</button></div><canvas id="cAll"></canvas></div>
+    </div>
+    <div class="chart-box wide" style="margin-top:12px"><div class="t">متوسط كل عبارة (57 عبارة) <button class="btn sm" onclick="png('cQ')">PNG</button></div><canvas id="cQ"></canvas></div>
+    <div class="chart-box wide" style="margin-top:12px"><div class="t">توزيع الإجابات لكل عبارة <button class="btn sm" onclick="png('cStack')">PNG</button></div><canvas id="cStack" height="140"></canvas></div>
+  </section>
+
+  <section><h2>تقرير العبارات</h2><div class="scroll"><table id="tQ"></table></div></section>
+  <section><h2>حلول الطلاب</h2><div class="scroll"><table id="tS"></table></div></section>
+</main>
+<script>
+const EDU={below_university:"أقل من جامعي",university:"جامعي",master:"ماجستير",doctorate:"دكتوراه"};
+const COLORS=["#d9534f","#f0ad4e","#9aa5b1","#5bc0de","#16834b"];
+const PAL=["#0f86bd","#16834b","#d89400","#b3261e","#6a4c93","#2a9d8f","#e76f51","#264653"];
+const charts={};
+Chart.defaults.font.family="Tahoma, Arial, sans-serif";
+function mk(id,cfg){if(charts[id])charts[id].destroy();cfg.options=Object.assign({responsive:true,animation:false},cfg.options||{});cfg.plugins=[{id:"bg",beforeDraw:c=>{const x=c.ctx;x.save();x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.restore()}}];charts[id]=new Chart(document.getElementById(id),cfg)}
+function png(id){const a=document.createElement("a");a.href=charts[id].toBase64Image("image/png",1);a.download=id+".png";a.click()}
+function downloadAllCharts(){Object.keys(charts).forEach((id,i)=>setTimeout(()=>png(id),i*300))}
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+async function del(id){if(!confirm("حذف حل هذا الطالب نهائيًا؟"))return;await fetch("/admin/api/delete/"+id,{method:"POST"});load()}
+async function load(){
+  const {submissions:S,stats:st}=await (await fetch("/admin/api/data")).json();
+  document.getElementById("cards").innerHTML=[
+    ["عدد الطلاب",st.students_count],["متوسط الدرجة الكلية",st.total_score.mean+" / 285"],
+    ["أعلى درجة",st.total_score.max],["أدنى درجة",st.total_score.min],
+    ["المتوسط العام للعبارة",st.students_count?(st.total_score.mean/57).toFixed(2)+" / 5":0]
+  ].map(([l,v])=>`<div class="card"><div class="v">${esc(v)}</div><div class="l">${l}</div></div>`).join("");
+  const g=Object.keys(st.grades);
+  mk("cGrade",{type:"bar",data:{labels:g,datasets:[{label:"عدد الطلاب",data:g.map(k=>st.grades[k]),backgroundColor:PAL[0]}]}});
+  const gm=Object.keys(st.mean_total_by_grade);
+  mk("cGradeMean",{type:"bar",data:{labels:gm,datasets:[{label:"متوسط الدرجة",data:gm.map(k=>st.mean_total_by_grade[k]),backgroundColor:PAL[1]}]}});
+  const edu=(id,o)=>{const k=Object.keys(o);mk(id,{type:"pie",data:{labels:k.map(x=>EDU[x]||x),datasets:[{data:k.map(x=>o[x]),backgroundColor:PAL}]}})};
+  edu("cFather",st.father_education);edu("cMother",st.mother_education);
+  const bins=["57-102","103-148","149-194","195-240","241-285"],bc=[0,0,0,0,0];
+  S.forEach(s=>{bc[Math.min(4,Math.floor((s.total_score-57)/46))]++});
+  mk("cTotals",{type:"bar",data:{labels:bins,datasets:[{label:"عدد الطلاب",data:bc,backgroundColor:PAL[2]}]}});
+  const all=[1,2,3,4,5].map(v=>st.questions.reduce((a,q)=>a+q.distribution[v],0));
+  mk("cAll",{type:"doughnut",data:{labels:["1","2","3","4","5"],datasets:[{data:all,backgroundColor:COLORS}]}});
+  const ql=st.questions.map(q=>q.question.replace("Q",""));
+  mk("cQ",{type:"bar",data:{labels:ql,datasets:[{label:"المتوسط",data:st.questions.map(q=>q.mean),backgroundColor:PAL[0]}]},options:{scales:{y:{min:0,max:5}}}});
+  mk("cStack",{type:"bar",data:{labels:ql,datasets:[1,2,3,4,5].map(v=>({label:String(v),data:st.questions.map(q=>q.distribution[v]),backgroundColor:COLORS[v-1]}))},options:{scales:{x:{stacked:true},y:{stacked:true}}}});
+  document.getElementById("tQ").innerHTML="<tr><th>العبارة</th><th>المتوسط</th><th>الانحراف المعياري</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>"+
+    st.questions.map(q=>`<tr><td>${q.question}</td><td>${q.mean}</td><td>${q.sd}</td>${[1,2,3,4,5].map(v=>`<td>${q.distribution[v]}</td>`).join("")}</tr>`).join("");
+  document.getElementById("tS").innerHTML="<tr><th>#</th><th>المعرف</th><th>التاريخ</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة الكلية</th><th>المتوسط</th><th></th></tr>"+
+    S.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.id)}</td><td>${new Date(s.submitted_at).toLocaleString("ar-SA")}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]}</td><td>${EDU[s.mother_education]}</td><td>${s.total_score}</td><td>${s.mean_score}</td><td><a class="btn sm" href="/admin/download/student/${s.id}.json">JSON</a> <button class="btn sm del" onclick="del('${s.id}')">حذف</button></td></tr>`).join("");
+}
+load();
+</script>
+</body></html>
