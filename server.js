@@ -38,6 +38,7 @@ function cleanText(v, max) { return String(v ?? "").replace(/[\u0000-\u001f<>]/g
 function validate(d) {
   if (!d || typeof d !== "object") return [null, "بيانات غير صالحة"];
   const out = {
+    student_name: cleanText(d.student_name, 80),
     grade: cleanText(d.grade, 50),
     family_count: cleanText(d.family_count, 10),
     father_education: d.father_education,
@@ -90,8 +91,8 @@ function stats(all) {
 
 function csvEscape(v) { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
 function toCSV(all) {
-  const head = ["id", "submitted_at", "grade", "family_count", "father_education", "mother_education", ...Q, "total_score", "mean_score"];
-  const rows = all.map(s => [s.id, s.submitted_at, s.grade, s.family_count, EDU_AR[s.father_education], EDU_AR[s.mother_education], ...Q.map(q => s.answers[q]), s.total_score, s.mean_score]);
+  const head = ["id", "student_name", "submitted_at", "grade", "family_count", "father_education", "mother_education", ...Q, "total_score", "mean_score"];
+  const rows = all.map(s => [s.id, s.student_name || "", s.submitted_at, s.grade, s.family_count, EDU_AR[s.father_education], EDU_AR[s.mother_education], ...Q.map(q => s.answers[q]), s.total_score, s.mean_score]);
   return "\uFEFF" + [head, ...rows].map(r => r.map(csvEscape).join(",")).join("\r\n");
 }
 function statsCSV(st) {
