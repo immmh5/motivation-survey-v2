@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "description": "مقياس الدافعية للتعلم - جمع حلول الطلاب وتقارير",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": {
+    "start": "node server.js",
+    "import": "node scripts/import-backup.js"
+  },
   "engines": { "node": ">=18" },
-  "license": "MIT"
+  "dependencies": {
+    "pg": "^8.11.0"
+  },
+  "license": "MIT",
+  "author": "Team",
+  "private": true
 }

@@ -4,14 +4,12 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
+const storage = require("./storage");
+
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
-const SUB_DIR = path.join(DATA_DIR, "submissions");
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const CID_DIR = path.join(DATA_DIR, "client-ids");
-fs.mkdirSync(SUB_DIR, { recursive: true });
-fs.mkdirSync(CID_DIR, { recursive: true });
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Accept", "Cache-Control": "no-store" };
 
 const Q = Array.from({ length: 57 }, (_, i) => `Q${String(i + 1).padStart(2, "0")}`);
@@ -33,12 +31,15 @@ function readBody(req, limit = 200000) {
   });
 }
 
+// أزلنا دوال نظام التخزين القديمة - الآن نستخدم storage.listAll() مباشرة
+const SUB_DIR = path.join(DATA_DIR, "submissions");
+const CID_DIR = path.join(DATA_DIR, "client-ids");
+
 function cleanText(v, max) { return String(v ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, max); }
 
 function validate(d) {
   if (!d || typeof d !== "object") return [null, "بيانات غير صالحة"];
   const out = {
-    student_name: cleanText(d.student_name, 80),
     grade: cleanText(d.grade, 50),
     family_count: cleanText(d.family_count, 10),
     father_education: d.father_education,
@@ -57,11 +58,7 @@ function validate(d) {
   return [{ ...out, answers }, null];
 }
 
-function loadAll() {
-  return fs.readdirSync(SUB_DIR).filter(f => f.endsWith(".json")).sort().map(f => {
-    try { return JSON.parse(fs.readFileSync(path.join(SUB_DIR, f), "utf8")); } catch { return null; }
-  }).filter(Boolean);
-}
+// Removed file system storage functions - now using storage module
 
 function stats(all) {
   const n = all.length;
@@ -91,8 +88,8 @@ function stats(all) {
 
 function csvEscape(v) { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
 function toCSV(all) {
-  const head = ["id", "student_name", "submitted_at", "grade", "family_count", "father_education", "mother_education", ...Q, "total_score", "mean_score"];
-  const rows = all.map(s => [s.id, s.student_name || "", s.submitted_at, s.grade, s.family_count, EDU_AR[s.father_education], EDU_AR[s.mother_education], ...Q.map(q => s.answers[q]), s.total_score, s.mean_score]);
+  const head = ["id", "submitted_at", "grade", "family_count", "father_education", "mother_education", ...Q, "total_score", "mean_score"];
+  const rows = all.map(s => [s.id, s.submitted_at, s.grade, s.family_count, EDU_AR[s.father_education], EDU_AR[s.mother_education], ...Q.map(q => s.answers[q]), s.total_score, s.mean_score]);
   return "\uFEFF" + [head, ...rows].map(r => r.map(csvEscape).join(",")).join("\r\n");
 }
 function statsCSV(st) {
@@ -144,27 +141,29 @@ const server = http.createServer(async (req, res) => {
       if (err) return json(res, 400, { ok: false, error: err }, CORS);
       // منع التكرار: إذا أعاد الجهاز إرسال نفس الحل (بسبب إعادة المحاولة) نرجع نفس المعرف
       const cid = /^[a-z0-9]{8,40}$/i.test(String(body.client_id || "")) ? String(body.client_id) : null;
-      const cidFile = cid ? path.join(CID_DIR, cid) : null;
-      if (cidFile && fs.existsSync(cidFile)) return json(res, 200, { ok: true, id: fs.readFileSync(cidFile, "utf8"), duplicate: true }, CORS);
-      const now = new Date();
-      const id = `${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(3).toString("hex")}`;
-      const total = Q.reduce((a, q) => a + clean.answers[q], 0);
-      const record = { id, form_version: cleanText(body.form_version, 40) || "motivation-scale-v1", submitted_at: now.toISOString(), ...clean, total_score: total, mean_score: +(total / 57).toFixed(3) };
-      fs.writeFileSync(path.join(SUB_DIR, `${id}.json`), JSON.stringify(record, null, 2));
-      if (cidFile) fs.writeFileSync(cidFile, id);
-      return json(res, 200, { ok: true, id }, CORS);
+      if (cid) {
+        const existing = await storage.getById(cid);
+        if (existing) {
+          return json(res, 200, { ok: true, id: existing.id, duplicate: true }, CORS);
+        }
+      }
+      const result = await storage.save(body);
+      return json(res, 200, { ok: true, id: result.id || "saved" }, CORS);
     }
 
     if (req.method === "GET" && p === "/health") return json(res, 200, { ok: true }, CORS);
 
     if (p.startsWith("/admin")) {
       if (!authed(req)) return send(res, 401, "مطلوب تسجيل الدخول", "text/plain; charset=utf-8", { "WWW-Authenticate": 'Basic realm="admin", charset="UTF-8"' });
-      const all = loadAll();
+      const all = await storage.listAll();
       const day = new Date().toISOString().slice(0, 10);
       const dl = (name) => ({ "Content-Disposition": `attachment; filename="${name}"` });
       if (p === "/admin" || p === "/admin/") return send(res, 200, fs.readFileSync(path.join(__dirname, "public", "admin.html")), "text/html; charset=utf-8");
       if (p === "/admin/report" || p === "/admin/report/") return send(res, 200, fs.readFileSync(path.join(__dirname, "public", "report.html")), "text/html; charset=utf-8");
-      if (p === "/admin/api/data") return json(res, 200, { submissions: all, stats: stats(all) });
+      if (p === "/admin/api/data") {
+        const allArray = Array.isArray(all) ? all : [];
+        return json(res, 200, { submissions: allArray, stats: stats(allArray) });
+      }
       if (p === "/admin/download/all.json") return send(res, 200, JSON.stringify(all, null, 2), "application/json; charset=utf-8", dl(`all-submissions-${day}.json`));
       if (p === "/admin/download/stats.json") return send(res, 200, JSON.stringify(stats(all), null, 2), "application/json; charset=utf-8", dl(`report-stats-${day}.json`));
       if (p === "/admin/download/all.csv") return send(res, 200, toCSV(all), "text/csv; charset=utf-8", dl(`all-submissions-${day}.csv`));
@@ -183,7 +182,7 @@ const server = http.createServer(async (req, res) => {
       const m = p.match(/^\/admin\/download\/student\/([\w-]+)\.json$/);
       if (m) { const s = all.find(x => x.id === m[1]); if (!s) return json(res, 404, { error: "غير موجود" }); return send(res, 200, JSON.stringify(s, null, 2), "application/json; charset=utf-8", dl(`${s.id}.json`)); }
       const d = p.match(/^\/admin\/api\/delete\/([\w-]+)$/);
-      if (d && req.method === "POST") { const f = path.join(SUB_DIR, `${d[1]}.json`); if (fs.existsSync(f)) fs.unlinkSync(f); for (const c of fs.readdirSync(CID_DIR)) { try { if (fs.readFileSync(path.join(CID_DIR, c), "utf8") === d[1]) fs.unlinkSync(path.join(CID_DIR, c)); } catch {} } return json(res, 200, { ok: true }); }
+      if (d && req.method === "POST") { await storage.delete(d[1]); return json(res, 200, { ok: true }); }
     }
     send(res, 404, "Not found", "text/plain; charset=utf-8");
   } catch (e) { console.error(e); json(res, 500, { ok: false, error: "خطأ في الخادم" }); }
