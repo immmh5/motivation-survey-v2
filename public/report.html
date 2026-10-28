@@ -255,19 +255,19 @@ function build(S,st){
 
   // 7 students: 24 per page
   const order=S.map((s,i)=>({s,i})).sort((a,b)=>b.s.total_score-a.s.total_score);
-  const card=({s,i})=>{const l=level(s.mean_score);return `<div class="st"><div class="h"><span>طالب ${i+1}</span><span class="lv ${l}">${LV[l]}</span></div>
+  const card=({s,i})=>{const l=level(s.mean_score);return `<div class="st"><div class="h"><span>${s.student_name?esc(s.student_name):"طالب "+(i+1)}</span><span class="lv ${l}">${LV[l]}</span></div>
     <div class="row"><span>الصف</span><b>${esc(s.grade)}</b></div>
     <div class="row"><span>الدرجة الكلية</span><b>${s.total_score} من 285</b></div>
     <div class="row"><span>المتوسط</span><b>${f2(s.mean_score)}</b></div>
     <div class="bar" style="margin-top:5px"><i style="width:${s.mean_score/5*100}%;background:${LVC[l]}"></i></div></div>`};
   for(let k=0;k<order.length;k+=18){
     pages.push(sheet(`<h2 class="sec"><span class="n">6</span>نتائج الطلاب${k?" (تابع)":""}</h2>
-      ${k?"":'<p style="color:var(--muted);font-size:13px;margin-bottom:12px">مرتبة من الأعلى إلى الأدنى، ورقم الطالب حسب ترتيب التسليم.</p>'}
+      ${k?"":'<p style="color:var(--muted);font-size:13px;margin-bottom:12px">مرتبة من الأعلى إلى الأدنى، ويظهر اسم الطالب، أو رقمه حسب ترتيب التسليم إذا لم يكتب اسمه.</p>'}
       <div class="students">${order.slice(k,k+18).map(card).join("")}</div>`));
   }
   // 8 students table
-  const stRows=S.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]||""}</td><td>${EDU[s.mother_education]||""}</td><td>${s.total_score}</td><td>${f2(s.mean_score)}</td><td><span class="lv ${level(s.mean_score)}">${LV[level(s.mean_score)]}</span></td></tr>`);
-  const stHead=`<tr><th>#</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة</th><th>المتوسط</th><th>المستوى</th></tr>`;
+  const stRows=S.map((s,i)=>`<tr><td>${i+1}</td><td>${s.student_name?esc(s.student_name):"طالب "+(i+1)}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]||""}</td><td>${EDU[s.mother_education]||""}</td><td>${s.total_score}</td><td>${f2(s.mean_score)}</td><td><span class="lv ${level(s.mean_score)}">${LV[level(s.mean_score)]}</span></td></tr>`);
+  const stHead=`<tr><th>#</th><th>اسم الطالب</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة</th><th>المتوسط</th><th>المستوى</th></tr>`;
   for(let k=0;k<stRows.length;k+=25) pages.push(sheet(`<h2 class="sec"><span class="n">7</span>جدول بيانات الطلاب${k?" (تابع)":""}</h2><table>${stHead}${stRows.slice(k,k+25).join("")}</table>`));
 
   const box=document.getElementById("sheets");box.innerHTML=pages.join("");
