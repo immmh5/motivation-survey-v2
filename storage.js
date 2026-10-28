@@ -16,17 +16,22 @@ class FileStorage {
 
   async save(data) {
     const now = new Date();
-    const id = `${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(3).toString("hex")}`;
+    // الاحتفاظ بالمعرف الأصلي عند الاستيراد من نسخة احتياطية، وإلا توليد معرف جديد
+    const id = (data.id && /^[\w-]{8,64}$/.test(String(data.id)))
+      ? String(data.id)
+      : `${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(3).toString("hex")}`;
     const total = Object.keys(data.answers).reduce((a, q) => a + data.answers[q], 0);
     const record = {
       id,
       form_version: data.form_version || "motivation-scale-v1",
-      submitted_at: now.toISOString(),
+      submitted_at: data.submitted_at || now.toISOString(),
       ...data,
       total_score: total,
       mean_score: Number((total / 57).toFixed(3))
     };
-    fs.writeFileSync(path.join(this.subDir, `${id}.json`), JSON.stringify(record, null, 2));
+    const file = path.join(this.subDir, `${id}.json`);
+    if (fs.existsSync(file)) return { ok: true, id, duplicate: true };
+    fs.writeFileSync(file, JSON.stringify(record, null, 2));
     if (data.client_id) fs.writeFileSync(path.join(this.cidDir, data.client_id), id);
     return { ok: true, id, duplicate: false };
   }
@@ -54,6 +59,19 @@ class FileStorage {
 
   async count() {
     return fs.readdirSync(this.subDir).filter(f => f.endsWith(".json")).length;
+  }
+
+  async getByClientId(cid) {
+    const safe = String(cid || "").replace(/[^\w-]/g, "");
+    if (!safe) return null;
+    try {
+      const mapFile = path.join(this.cidDir, safe);
+      if (!fs.existsSync(mapFile)) return null;
+      const rid = fs.readFileSync(mapFile, "utf8").trim();
+      return this.getById(rid);
+    } catch {
+      return null;
+    }
   }
 
   async delete(id) {
@@ -85,27 +103,35 @@ class PostgresStorage {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_submissions_created_at ON submissions(created_at);
+      CREATE INDEX IF NOT EXISTS idx_submissions_client_id ON submissions ((data->>'client_id'));
     `);
   }
 
   async save(data) {
+    if (!data || typeof data.answers !== "object" || !data.answers) {
+      return { ok: false, error: "missing answers" };
+    }
     const now = new Date();
-    const id = `${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(3).toString("hex")}`;
+    // الاحتفاظ بالمعرف الأصلي عند الاستيراد من نسخة احتياطية، وإلا توليد معرف جديد
+    const id = (data.id && /^[\w-]{8,64}$/.test(String(data.id)))
+      ? String(data.id)
+      : `${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${crypto.randomBytes(3).toString("hex")}`;
     const total = Object.keys(data.answers).reduce((a, q) => a + data.answers[q], 0);
     const record = {
       id,
       form_version: data.form_version || "motivation-scale-v1",
-      submitted_at: now.toISOString(),
+      submitted_at: data.submitted_at || now.toISOString(),
       ...data,
       total_score: total,
       mean_score: Number((total / 57).toFixed(3))
     };
 
     try {
-      await this.pool.query(
+      const result = await this.pool.query(
         `INSERT INTO submissions (id, data, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
         [id, record, now, now]
       );
+      if (result.rowCount === 0) return { ok: true, id, duplicate: true };
       return { ok: true, id, duplicate: false };
     } catch (err) {
       console.error("Database save error:", err);
@@ -147,6 +173,19 @@ class PostgresStorage {
     } catch (err) {
       console.error("Database count error:", err);
       return 0;
+    }
+  }
+
+  async getByClientId(cid) {
+    try {
+      const result = await this.pool.query(
+        "SELECT data FROM submissions WHERE data->>'client_id' = $1 ORDER BY created_at DESC LIMIT 1",
+        [String(cid)]
+      );
+      return result.rows[0]?.data || null;
+    } catch (err) {
+      console.error("Database getByClientId error:", err);
+      return null;
     }
   }
 
@@ -216,6 +255,11 @@ async function getById(id) {
   return storage.getById(id);
 }
 
+async function getByClientId(cid) {
+  const storage = await ensureStorage();
+  return storage.getByClientId(cid);
+}
+
 async function listAll() {
   const storage = await ensureStorage();
   return storage.listAll();
@@ -242,6 +286,7 @@ async function cleanup() {
 module.exports = {
   save,
   getById,
+  getByClientId,
   listAll,
   count,
   delete: remove,
