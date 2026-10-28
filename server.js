@@ -142,13 +142,14 @@ const server = http.createServer(async (req, res) => {
       // منع التكرار: إذا أعاد الجهاز إرسال نفس الحل (بسبب إعادة المحاولة) نرجع نفس المعرف
       const cid = /^[a-z0-9]{8,40}$/i.test(String(body.client_id || "")) ? String(body.client_id) : null;
       if (cid) {
-        const existing = await storage.getById(cid);
-        if (existing) {
+        const existing = await storage.getByClientId(cid);
+        if (existing && existing.id) {
           return json(res, 200, { ok: true, id: existing.id, duplicate: true }, CORS);
         }
       }
-      const result = await storage.save(body);
-      return json(res, 200, { ok: true, id: result.id || "saved" }, CORS);
+      // ملاحظة: نحفظ الكائن المُنقّى من validate (وليس الطلب الخام) مع client_id
+      const result = await storage.save(cid ? { ...clean, client_id: cid } : clean);
+      return json(res, 200, { ok: true, id: result.id || "saved", duplicate: !!result.duplicate }, CORS);
     }
 
     if (req.method === "GET" && p === "/health") return json(res, 200, { ok: true }, CORS);
