@@ -91,8 +91,8 @@ async function load(){
   mk("cStack",{type:"bar",data:{labels:ql,datasets:[1,2,3,4,5].map(v=>({label:String(v),data:st.questions.map(q=>q.distribution[v]),backgroundColor:COLORS[v-1]}))},options:{scales:{x:{stacked:true},y:{stacked:true}}}});
   document.getElementById("tQ").innerHTML="<tr><th>العبارة</th><th>المتوسط</th><th>الانحراف المعياري</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>"+
     st.questions.map(q=>`<tr><td>${q.question}</td><td>${q.mean}</td><td>${q.sd}</td>${[1,2,3,4,5].map(v=>`<td>${q.distribution[v]}</td>`).join("")}</tr>`).join("");
-  document.getElementById("tS").innerHTML="<tr><th>#</th><th>المعرف</th><th>التاريخ</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة الكلية</th><th>المتوسط</th><th></th></tr>"+
-    S.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.id)}</td><td>${new Date(s.submitted_at).toLocaleString("ar-SA")}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]}</td><td>${EDU[s.mother_education]}</td><td>${s.total_score}</td><td>${s.mean_score}</td><td><a class="btn sm" href="/admin/download/student/${s.id}.json">JSON</a> <button class="btn sm del" onclick="del('${s.id}')">حذف</button></td></tr>`).join("");
+  document.getElementById("tS").innerHTML="<tr><th>#</th><th>اسم الطالب</th><th>المعرف</th><th>التاريخ</th><th>الصف</th><th>أفراد الأسرة</th><th>تعليم الأب</th><th>تعليم الأم</th><th>الدرجة الكلية</th><th>المتوسط</th><th></th></tr>"+
+    S.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.student_name&&String(s.student_name).trim()?s.student_name:"طالب "+(i+1))}</td><td>${esc(s.id)}</td><td>${new Date(s.submitted_at).toLocaleString("ar-SA")}</td><td>${esc(s.grade)}</td><td>${esc(s.family_count)}</td><td>${EDU[s.father_education]}</td><td>${EDU[s.mother_education]}</td><td>${s.total_score}</td><td>${s.mean_score}</td><td><a class="btn sm" href="/admin/download/student/${s.id}.json">JSON</a> <button class="btn sm del" onclick="del('${s.id}')">حذف</button></td></tr>`).join("");
 }
 load();
 </script>
