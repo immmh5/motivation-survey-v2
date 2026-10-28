@@ -40,6 +40,7 @@ function cleanText(v, max) { return String(v ?? "").replace(/[\u0000-\u001f<>]/g
 function validate(d) {
   if (!d || typeof d !== "object") return [null, "بيانات غير صالحة"];
   const out = {
+    student_name: cleanText(d.student_name, 80),
     grade: cleanText(d.grade, 50),
     family_count: cleanText(d.family_count, 10),
     father_education: d.father_education,
