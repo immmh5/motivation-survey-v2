@@ -226,7 +226,10 @@ async function count() {
   return storage.count();
 }
 
-async function delete(id) {
+// NOTE: "delete" is a reserved word in JavaScript and cannot be used as a
+// standalone function name, so the public API wrapper is named `remove` and
+// exported under the key "delete" to keep server.js's storage.delete() working.
+async function remove(id) {
   const storage = await ensureStorage();
   return storage.delete(id);
 }
@@ -241,7 +244,7 @@ module.exports = {
   getById,
   listAll,
   count,
-  delete,
+  delete: remove,
   cleanup,
   // Internal
   _usingPostgres,
